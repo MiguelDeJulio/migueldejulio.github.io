@@ -658,11 +658,35 @@ With:
                                 <h4 class="mt-2">Idiomas</h4>
 ```
 
-- [ ] **Step 4: Verify**
+- [ ] **Step 4: Add soft skills card below Languages card**
 
-Reload. Third resume column should show Herramientas (Office, QGIS) and Idiomas (Español, Inglés B2).
+After the Languages card's closing `</div></div>` (line ~276) and before the closing `</div>` of the `col-lg-4` column, insert:
+```html
+                    <div class="card">
+                       <div class="card-header">
+                            <div class="pull-left">
+                                <h4 class="mt-2">Competencias</h4>
+                                <span class="line"></span>
+                            </div>
+                        </div>
+                        <div class="card-body pb-2">
+                            <ul class="list-unstyled mb-0">
+                                <li class="mb-2"><i class="ti-user text-danger mr-2"></i> Trabajo en equipo</li>
+                                <li class="mb-2"><i class="ti-bolt text-danger mr-2"></i> Proactividad</li>
+                                <li class="mb-2"><i class="ti-check-box text-danger mr-2"></i> Responsabilidad</li>
+                                <li class="mb-2"><i class="ti-comment text-danger mr-2"></i> Comunicación</li>
+                            </ul>
+                        </div>
+                    </div>
+```
 
-- [ ] **Step 5: Commit**
+The exact insertion point is after `</div>\n                    </div>` that closes the Languages card and before the closing `</div>\n            </div>\n        </div>\n    </section>` that closes the Resume section column.
+
+- [ ] **Step 5: Verify**
+
+Reload. Third resume column should show: Herramientas (Office, QGIS), Idiomas (Español, Inglés B2), and Competencias (four soft skills as a list).
+
+- [ ] **Step 6: Commit**
 ```bash
 git add index.html
 git commit -m "feat: update skills and languages cards for Miguel De Julio"
