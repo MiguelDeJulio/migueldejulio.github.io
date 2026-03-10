@@ -1,8 +1,8 @@
 /*!
  * Nature Header Background
  * Twilight countryside scene for Miguel De Julio's portfolio.
- * Canvas-based: dark sky, stars, moon, rolling hills, trees,
- * drifting clouds, flying birds, butterflies and fireflies.
+ * Canvas-based: dark sky, stars, moon, rolling hills, tree silhouettes,
+ * drifting clouds, flying birds, deer, hopping rabbits and fireflies.
  */
 (function () {
     'use strict';
@@ -12,10 +12,11 @@
     var isMobile = false;
     var prefersReducedMotion = false;
 
-    var birds = [], butterflies = [], clouds = [], fireflies = [], trees = [];
+    var birds = [], deer = [], rabbits = [], clouds = [], fireflies = [], trees = [];
     var hillPoints1 = [], hillPoints2 = [];
+    var HILL_STEP = 8;
 
-    // ── Stars (fixed positions, computed once) ──────────────────────
+    // ── Stars (fixed positions) ──────────────────────────────────────
     var STAR_DATA = [
         [0.04, 0.04, 1.3], [0.11, 0.09, 0.9], [0.18, 0.03, 1.1], [0.26, 0.07, 0.8],
         [0.33, 0.13, 1.2], [0.40, 0.02, 0.9], [0.47, 0.08, 1.0], [0.54, 0.05, 1.3],
@@ -56,34 +57,41 @@
         buildHills();
         buildTrees();
         buildBirds();
-        buildButterflies();
+        buildDeer();
+        buildRabbits();
         buildClouds();
         buildFireflies();
     }
 
-    // ── Hills (pre-computed sine wave points) ───────────────────────
+    // ── Hills ────────────────────────────────────────────────────────
     function buildHills() {
         hillPoints1 = [];
         hillPoints2 = [];
-        for (var x = 0; x <= W + 10; x += 8) {
+        for (var x = 0; x <= W + HILL_STEP; x += HILL_STEP) {
             hillPoints1.push(H * 0.67 + Math.sin(x * 0.005 + 0.8) * 44 + Math.sin(x * 0.016 + 1.5) * 20);
             hillPoints2.push(H * 0.78 + Math.sin(x * 0.008 + 2.8) * 32 + Math.sin(x * 0.022 + 0.3) * 16);
         }
     }
 
-    // ── Trees (silhouettes along the near hill) ──────────────────────
+    function getHillY(x) {
+        var idx = x / HILL_STEP;
+        var i0  = Math.max(0, Math.floor(idx));
+        var i1  = Math.min(hillPoints1.length - 1, i0 + 1);
+        var f   = idx - Math.floor(idx);
+        return hillPoints1[i0] * (1 - f) + hillPoints1[i1] * f;
+    }
+
+    // ── Trees ────────────────────────────────────────────────────────
     function buildTrees() {
         trees = [];
         var count = isMobile ? 10 : 22;
         var pts = hillPoints1.length;
         for (var i = 0; i < count; i++) {
-            var frac = i / count;
-            var xi = Math.floor(frac * (pts - 1));
-            var baseX = xi * 8 + (Math.random() - 0.5) * 50;
+            var xi   = Math.floor((i / count) * (pts - 1));
+            var baseX = xi * HILL_STEP + (Math.random() - 0.5) * 50;
             var baseY = hillPoints1[Math.max(0, Math.min(pts - 1, xi))];
             trees.push({
-                x: baseX,
-                y: baseY,
+                x: baseX, y: baseY,
                 h: 22 + Math.random() * 38,
                 w: 8  + Math.random() * 12,
                 pine: Math.random() < 0.65
@@ -107,24 +115,45 @@
         }
     }
 
-    // ── Butterflies ─────────────────────────────────────────────────
-    function buildButterflies() {
-        butterflies = [];
-        var count = isMobile ? 4 : 8;
-        var colors = ['#FF6B9D', '#FFD93D', '#6BCB77', '#4D96FF', '#FF9F1C', '#C77DFF', '#80FFDB', '#FF6348'];
+    // ── Deer ─────────────────────────────────────────────────────────
+    function buildDeer() {
+        deer = [];
+        var count = isMobile ? 2 : 4;
         for (var i = 0; i < count; i++) {
-            butterflies.push({
-                x:            Math.random() * W,
-                y:            H * 0.48 + Math.random() * H * 0.38,
-                speedX:       (Math.random() - 0.5) * 0.75,
-                speedY:       (Math.random() - 0.5) * 0.38,
-                wingPhase:    Math.random() * Math.PI * 2,
-                wingSpeed:    0.075 + Math.random() * 0.055,
-                size:         6 + Math.random() * 6,
-                color:        colors[i % colors.length],
-                bobPhase:     Math.random() * Math.PI * 2,
-                turnTimer:    0,
-                turnInterval: 80 + Math.random() * 130
+            var x   = (i + 0.5) * (W / count) + (Math.random() - 0.5) * W * 0.12;
+            x = Math.max(60, Math.min(W - 60, x));
+            var dir = (Math.random() < 0.5) ? 1 : -1;
+            deer.push({
+                x:           x,
+                y:           getHillY(x),
+                dir:         dir,
+                speed:       0.12 + Math.random() * 0.22,
+                scale:       0.80 + Math.random() * 0.35,
+                hasAntlers:  Math.random() < 0.55,
+                moving:      true,
+                pauseTimer:  Math.floor(Math.random() * 200),
+                pauseDur:    200 + Math.floor(Math.random() * 300)
+            });
+        }
+    }
+
+    // ── Rabbits ──────────────────────────────────────────────────────
+    function buildRabbits() {
+        rabbits = [];
+        var count = isMobile ? 3 : 5;
+        for (var i = 0; i < count; i++) {
+            var x = Math.random() * (W - 80) + 40;
+            rabbits.push({
+                x:          x,
+                y:          getHillY(x),
+                dir:        (Math.random() < 0.5) ? 1 : -1,
+                speed:      0.3 + Math.random() * 0.7,
+                scale:      0.55 + Math.random() * 0.25,
+                hopPhase:   Math.random() * Math.PI * 2,
+                hopY:       0,
+                moving:     true,
+                pauseTimer: Math.floor(Math.random() * 150),
+                pauseDur:   80 + Math.floor(Math.random() * 200)
             });
         }
     }
@@ -192,22 +221,44 @@
             }
         });
 
-        butterflies.forEach(function (bf) {
-            bf.x += bf.speedX;
-            bf.y += bf.speedY + Math.sin(bf.bobPhase) * 0.22;
-            bf.wingPhase += bf.wingSpeed;
-            bf.bobPhase  += 0.038;
-            bf.turnTimer++;
-            if (bf.turnTimer >= bf.turnInterval) {
-                bf.speedX       = (Math.random() - 0.5) * 0.75;
-                bf.speedY       = (Math.random() - 0.5) * 0.38;
-                bf.turnTimer    = 0;
-                bf.turnInterval = 80 + Math.random() * 130;
+        deer.forEach(function (d) {
+            d.pauseTimer++;
+            if (d.moving) {
+                d.x += d.speed * d.dir;
+                d.y = getHillY(d.x);
+                if (d.x < 30)     d.dir =  1;
+                if (d.x > W - 30) d.dir = -1;
             }
-            if (bf.x < -25) bf.x = W + 25;
-            if (bf.x > W + 25) bf.x = -25;
-            if (bf.y < H * 0.42) bf.speedY = Math.abs(bf.speedY) + 0.08;
-            if (bf.y > H * 0.89) bf.speedY = -Math.abs(bf.speedY) - 0.08;
+            if (d.pauseTimer >= d.pauseDur) {
+                d.moving    = !d.moving;
+                d.pauseTimer = 0;
+                d.pauseDur  = d.moving
+                    ? (250 + Math.floor(Math.random() * 400))
+                    : (80  + Math.floor(Math.random() * 180));
+                if (!d.moving && Math.random() < 0.35) d.dir *= -1;
+            }
+        });
+
+        rabbits.forEach(function (r) {
+            r.pauseTimer++;
+            if (r.moving) {
+                r.x += r.speed * r.dir;
+                r.y = getHillY(r.x);
+                r.hopPhase += 0.18;
+                r.hopY = -Math.abs(Math.sin(r.hopPhase)) * 9 * r.scale;
+                if (r.x < 20)     r.dir =  1;
+                if (r.x > W - 20) r.dir = -1;
+            } else {
+                r.hopY *= 0.8; // settle when stationary
+            }
+            if (r.pauseTimer >= r.pauseDur) {
+                r.moving     = !r.moving;
+                r.pauseTimer = 0;
+                r.pauseDur   = r.moving
+                    ? (120 + Math.floor(Math.random() * 250))
+                    : (60  + Math.floor(Math.random() * 160));
+                if (!r.moving && Math.random() < 0.4) r.dir *= -1;
+            }
         });
 
         clouds.forEach(function (c) {
@@ -227,15 +278,14 @@
     // ── Draw helpers ─────────────────────────────────────────────────
     function drawBackground() {
         var sky = ctx.createLinearGradient(0, 0, 0, H * 0.78);
-        sky.addColorStop(0,    '#06090f'); // near-black top — keeps text white & readable
-        sky.addColorStop(0.22, '#0b1a30'); // deep navy
-        sky.addColorStop(0.50, '#122840'); // dark blue
-        sky.addColorStop(0.72, '#1a3d30'); // dark teal-green transition to ground
+        sky.addColorStop(0,    '#06090f');
+        sky.addColorStop(0.22, '#0b1a30');
+        sky.addColorStop(0.50, '#122840');
+        sky.addColorStop(0.72, '#1a3d30');
         sky.addColorStop(1,    '#152b21');
         ctx.fillStyle = sky;
         ctx.fillRect(0, 0, W, H);
 
-        // Subtle warm horizon glow (sunset remnant)
         var hy = H * 0.66;
         var hg = ctx.createRadialGradient(W * 0.5, hy, 0, W * 0.5, hy, W * 0.55);
         hg.addColorStop(0,   'rgba(255, 140, 50, 0.07)');
@@ -244,7 +294,6 @@
         ctx.fillStyle = hg;
         ctx.fillRect(0, hy - H * 0.18, W, H * 0.36);
 
-        // Ground fill
         var grd = ctx.createLinearGradient(0, H * 0.72, 0, H);
         grd.addColorStop(0, '#152b21');
         grd.addColorStop(1, '#0a1a10');
@@ -254,7 +303,7 @@
 
     function drawStars() {
         for (var i = 0; i < STAR_DATA.length; i++) {
-            var s = STAR_DATA[i];
+            var s     = STAR_DATA[i];
             var alpha = 0.25 + 0.55 * Math.abs(Math.sin(time * 0.011 + i * 1.7));
             ctx.beginPath();
             ctx.arc(s[0] * W, s[1] * H, s[2], 0, Math.PI * 2);
@@ -265,19 +314,14 @@
 
     function drawMoon() {
         var mx = W * 0.83, my = H * 0.13;
-        // Outer glow
         var g = ctx.createRadialGradient(mx, my, 0, mx, my, 90);
         g.addColorStop(0,   'rgba(220, 215, 170, 0.10)');
         g.addColorStop(0.4, 'rgba(200, 195, 140, 0.04)');
         g.addColorStop(1,   'rgba(0, 0, 0, 0)');
         ctx.fillStyle = g;
         ctx.beginPath(); ctx.arc(mx, my, 90, 0, Math.PI * 2); ctx.fill();
-
-        // Moon disc
         ctx.fillStyle = '#ddd8a8';
         ctx.beginPath(); ctx.arc(mx, my, 19, 0, Math.PI * 2); ctx.fill();
-
-        // Crescent cutout
         ctx.fillStyle = '#0b1a30';
         ctx.beginPath(); ctx.arc(mx + 7, my - 3, 15, 0, Math.PI * 2); ctx.fill();
     }
@@ -287,7 +331,7 @@
         ctx.translate(c.x, c.y);
         ctx.scale(c.scale, c.scale * 0.58);
         ctx.fillStyle = 'rgba(170, 195, 230, ' + c.alpha + ')';
-        var blobs = [[0, 0, 26], [30, -7, 21], [56, 2, 24], [82, -5, 19], [18, 9, 17], [62, 9, 17]];
+        var blobs = [[0,0,26],[30,-7,21],[56,2,24],[82,-5,19],[18,9,17],[62,9,17]];
         for (var i = 0; i < blobs.length; i++) {
             ctx.beginPath(); ctx.arc(blobs[i][0], blobs[i][1], blobs[i][2], 0, Math.PI * 2); ctx.fill();
         }
@@ -295,18 +339,14 @@
     }
 
     function drawHills() {
-        var step = 8;
-
-        // Far hill — darkest
         ctx.fillStyle = '#0f2218';
         ctx.beginPath(); ctx.moveTo(0, H);
-        for (var i = 0; i < hillPoints2.length; i++) ctx.lineTo(i * step, hillPoints2[i]);
+        for (var i = 0; i < hillPoints2.length; i++) ctx.lineTo(i * HILL_STEP, hillPoints2[i]);
         ctx.lineTo(W, H); ctx.closePath(); ctx.fill();
 
-        // Near hill — slightly lighter, trees sit on this
         ctx.fillStyle = '#182e22';
         ctx.beginPath(); ctx.moveTo(0, H);
-        for (var j = 0; j < hillPoints1.length; j++) ctx.lineTo(j * step, hillPoints1[j]);
+        for (var j = 0; j < hillPoints1.length; j++) ctx.lineTo(j * HILL_STEP, hillPoints1[j]);
         ctx.lineTo(W, H); ctx.closePath(); ctx.fill();
     }
 
@@ -327,6 +367,110 @@
         });
     }
 
+    // Deer silhouette facing right; flipped with scale(-1,1) when facing left
+    function drawDeer(d) {
+        var s = d.scale;
+        ctx.save();
+        ctx.translate(d.x, d.y);
+        if (d.dir < 0) ctx.scale(-1, 1);
+
+        ctx.fillStyle   = '#0b1a10';
+        ctx.strokeStyle = '#0b1a10';
+        ctx.lineCap     = 'round';
+
+        // Body
+        ctx.beginPath();
+        ctx.ellipse(0, -s * 9, s * 15, s * 7, 0.08, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Neck
+        ctx.lineWidth = s * 5;
+        ctx.beginPath();
+        ctx.moveTo(s * 9, -s * 13);
+        ctx.lineTo(s * 13, -s * 21);
+        ctx.stroke();
+
+        // Head
+        ctx.beginPath();
+        ctx.ellipse(s * 15, -s * 23, s * 5, s * 4, 0.35, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Snout
+        ctx.beginPath();
+        ctx.ellipse(s * 20, -s * 22, s * 3, s * 2.2, 0.1, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Ear
+        ctx.beginPath();
+        ctx.ellipse(s * 13, -s * 27, s * 2, s * 4, -0.3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Legs (4)
+        ctx.lineWidth = s * 2.8;
+        ctx.beginPath(); ctx.moveTo(s * 5,  -s * 3); ctx.lineTo(s * 3,  s * 10); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(s * 9,  -s * 3); ctx.lineTo(s * 11, s * 10); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(-s * 4, -s * 3); ctx.lineTo(-s * 6, s * 10); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(-s * 9, -s * 3); ctx.lineTo(-s * 7, s * 10); ctx.stroke();
+
+        // Tail
+        ctx.beginPath();
+        ctx.ellipse(-s * 14, -s * 10, s * 3, s * 2, 0.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Antlers
+        if (d.hasAntlers) {
+            ctx.lineWidth = s * 1.8;
+            // Left beam
+            ctx.beginPath(); ctx.moveTo(s * 12, -s * 26); ctx.lineTo(s * 9,  -s * 36); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(s * 10, -s * 31); ctx.lineTo(s * 6,  -s * 35); ctx.stroke();
+            // Right beam
+            ctx.beginPath(); ctx.moveTo(s * 15, -s * 26); ctx.lineTo(s * 19, -s * 35); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(s * 17, -s * 31); ctx.lineTo(s * 21, -s * 34); ctx.stroke();
+        }
+
+        ctx.restore();
+    }
+
+    // Rabbit silhouette
+    function drawRabbit(r) {
+        var s = r.scale;
+        ctx.save();
+        ctx.translate(r.x, r.y + r.hopY);
+        if (r.dir < 0) ctx.scale(-1, 1);
+
+        ctx.fillStyle = '#0b1a10';
+
+        // Body
+        ctx.beginPath();
+        ctx.ellipse(0, -s * 5, s * 6, s * 7, 0.12, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Head
+        ctx.beginPath();
+        ctx.ellipse(s * 6, -s * 10, s * 4.5, s * 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Ears
+        ctx.beginPath();
+        ctx.ellipse(s * 4.5, -s * 17, s * 1.6, s * 5.5, -0.1, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(s * 7.5, -s * 16, s * 1.6, s * 5.5, 0.18, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Tail
+        ctx.beginPath();
+        ctx.arc(-s * 6, -s * 5, s * 2.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Hind legs hint
+        ctx.beginPath();
+        ctx.ellipse(-s * 2, s * 1, s * 4, s * 2.5, -0.25, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+    }
+
     function drawFireflies() {
         fireflies.forEach(function (f) {
             var alpha = 0.35 + 0.65 * Math.abs(Math.sin(f.glowPhase));
@@ -343,39 +487,14 @@
     function drawBird(b) {
         var wingY = Math.sin(b.wingPhase) * b.size * 0.88;
         ctx.strokeStyle = 'rgba(210, 225, 255, 0.72)';
-        ctx.lineWidth = 1.2;
-        ctx.lineCap = 'round';
+        ctx.lineWidth   = 1.2;
+        ctx.lineCap     = 'round';
         ctx.beginPath();
         ctx.moveTo(b.x, b.y);
         ctx.quadraticCurveTo(b.x - b.size * 0.62, b.y - wingY, b.x - b.size * 1.28, b.y + wingY * 0.18);
         ctx.moveTo(b.x, b.y);
         ctx.quadraticCurveTo(b.x + b.size * 0.62, b.y - wingY, b.x + b.size * 1.28, b.y + wingY * 0.18);
         ctx.stroke();
-    }
-
-    function drawButterfly(bf) {
-        var s    = bf.size;
-        var open = Math.abs(Math.sin(bf.wingPhase));
-        ctx.save();
-        ctx.translate(bf.x, bf.y);
-
-        // Upper wings
-        ctx.globalAlpha = 0.82;
-        ctx.fillStyle = bf.color;
-        ctx.beginPath(); ctx.ellipse(-s * open * 0.88, -s * 0.32, s * open, s * 0.52, -0.22, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.ellipse( s * open * 0.88, -s * 0.32, s * open, s * 0.52,  0.22, 0, Math.PI * 2); ctx.fill();
-
-        // Lower wings (slightly smaller)
-        ctx.globalAlpha = 0.58;
-        ctx.beginPath(); ctx.ellipse(-s * open * 0.62, s * 0.28, s * open * 0.52, s * 0.36, 0.28, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.ellipse( s * open * 0.62, s * 0.28, s * open * 0.52, s * 0.36, -0.28, 0, Math.PI * 2); ctx.fill();
-
-        // Body
-        ctx.globalAlpha = 1;
-        ctx.fillStyle = '#2a1500';
-        ctx.beginPath(); ctx.ellipse(0, 0, 1.5, s * 0.42, 0, 0, Math.PI * 2); ctx.fill();
-
-        ctx.restore();
     }
 
     function drawVignette() {
@@ -397,9 +516,10 @@
         clouds.forEach(drawCloud);
         drawHills();
         drawTrees();
+        deer.forEach(drawDeer);
+        rabbits.forEach(drawRabbit);
         drawFireflies();
         birds.forEach(drawBird);
-        butterflies.forEach(drawButterfly);
         drawVignette();
     }
 
